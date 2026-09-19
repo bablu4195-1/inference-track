@@ -1,0 +1,60 @@
+services:
+  # Prefill worker: compute-bound, ingests prompts, ships KV to decode worker.
+  prefill:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-prefill
+    runtime: nvidia
+    ipc: host
+    ports:
+      - "8001:8000"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HUB_CACHE: /root/.cache/huggingface
+    volumes:
+      - /mnt/hf:/root/.cache/huggingface
+    command:
+      - "--model=Qwen/Qwen2.5-7B-Instruct"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--dtype=auto"
+      - "--gpu-memory-utilization=0.9"
+      - "--max-model-len=8192"
+      - "--max-num-batched-tokens=8192"
+      - "--trust-remote-code"
+      # Version-sensitive (vLLM 0.29+): verify against
+      # docs.vllm.ai disaggregated-prefill page for your exact image digest,
+      # then delete this comment and pin what worked.
+      - "--kv-transfer-config={\"kv_connector\":\"NixlConnector\",\"kv_role\":\"kv_both\"}"
+
+  # Decode worker: memory-bound, receives KV, streams tokens.
+  decode:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-decode
+    runtime: nvidia
+    ipc: host
+    ports:
+      - "8002:8000"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      HF_HUB_CACHE: /root/.cache/huggingface
+    volumes:
+      - /mnt/hf:/root/.cache/huggingface
+    command:
+      - "--model=Qwen/Qwen2.5-7B-Instruct"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--dtype=auto"
+      - "--gpu-memory-utilization=0.9"
+      - "--max-model-len=8192"
+      - "--max-num-batched-tokens=512"
+      - "--trust-remote-code"
+      - "--kv-transfer-config={\"kv_connector\":\"NixlConnector\",\"kv_role\":\"kv_both\"}"
+    depends_on:
+      prefill:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
