@@ -1,0 +1,13 @@
+{
+  "label": "on-16384",
+  "run_utc": "20260919T165909Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "decode_conc": 4,
+  "hog_tokens": 8192,
+  "itl_base_ms": 96.17,
+  "itl_mixed_ms": 97.68,
+  "starvation_x": 1.02,
+  "hog_ttft_ms": 2908.2,
+  "n_base": 8,
+  "n_mixed": 8
+}

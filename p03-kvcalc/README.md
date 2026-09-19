@@ -29,15 +29,14 @@ Terminal 2: `python3 p03-kvcalc/pressure.py --base-url http://<GPU>:8000`
 
 | seq_len | Predicted max_batch | Observed | err% | Verdict |
 |---|---|---|---|---|
-| 8192 (2026-09-19, cache OFF) | 10 | ≥14 no-error; mid-wave queueing from ~conc 4–6 per engine logs | — | **RECALIBRATE (method, not math)** |
+| 8192, distinct prompts (2026-09-19, cache ON) | 10 | 11 (queueing from conc 10, distress at 12) | +10.0% | **PASS** |
+| 8192, identical prompts (2026-09-19) | 10 | ≥14, KV only 12% | — | invalid run: shared prefix, kept as lesson |
 
-First-run lesson (kept, not hidden): the original detector scraped `/metrics`
-*after* each wave — queue always reads 0 post-wave. Engine logs proved
-queueing happened mid-wave (Waiting 1–4, KV to 61%+). Per-token KV math
-validated within ~7% (61% pool at ~75k tokens ≈ 52 KB/tok vs 56 predicted).
-Fix committed: `sample_during()` scrapes every 2 s *during* the wave and
-distress uses peak mid-wave queue depth. Re-run next boot. Raw:
-`runs/20260919-p3/`.
+Two lessons kept: (1) post-wave metric scrapes are blind — `sample_during()`
+scrapes mid-wave; (2) capacity ramps need distinct prompts — identical prompts
+share one prefix block (that run measured prefix-cache efficiency: 14×8k in
+12% KV). KV slope re-validates per-token math: ~10.4% pool/conc ≈ 65–70 KB/tok
+vs 61.6 predicted. Raw: `runs/20260919-p3/`.
 
 If err% > 15%: first suspect `--gpu-memory-utilization` and block-size
 overhead (`BLOCK_OVERHEAD` in `kv_math.py`), not the formula — then recalibrate.

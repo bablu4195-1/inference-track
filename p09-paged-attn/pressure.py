@@ -58,9 +58,21 @@ async def amain(a: argparse.Namespace) -> int:
     out.mkdir(parents=True, exist_ok=False)
     csv_path = str(out / "results.csv")
 
-    prompt = make_prompt(a.prompt_tokens)
+    # DISTINCT prompts per request: identical prompts share one prefix block
+    # under prefix-caching and never pressurize memory (P3 lesson 2026-09-19).
+    prompts = [make_prompt(a.prompt_tokens, seed=5000 + i) for i in range(a.conc)]
     timeline, first_wait, first_swap = [], None, None
     err_total, tok_total, wall_total = 0, 0, 0.0
+
+    async def distinct_wave():
+        sem = asyncio.Semaphore(max(a.conc, 1))
+
+        async def bounded(i: int):
+            await asyncio.sleep(0.05 * i)
+            async with sem:
+                return await bench.one_request(session, a.base_url, a.model,
+                                               prompts[i], a.gen, a.timeout_s)
+        return await asyncio.gather(*[bounded(i) for i in range(a.conc)])
 
     async with aiohttp.ClientSession() as session:
         # Small warmup so compile cost doesn't pollute wave 0.
@@ -68,8 +80,7 @@ async def amain(a: argparse.Namespace) -> int:
                          32, 1, a.timeout_s)
         for w in range(a.waves):
             t0 = time.perf_counter()
-            res = await bench.wave(session, a.base_url, a.model, prompt,
-                                   a.gen, a.conc, a.timeout_s)
+            res = await distinct_wave()
             wall = time.perf_counter() - t0
             errs = sum(1 for _, ok, _ in res if not ok)
             toks = sum(s.gen_tokens for s, ok, _ in res if ok)

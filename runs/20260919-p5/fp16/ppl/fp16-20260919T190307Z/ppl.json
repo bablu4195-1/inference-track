@@ -1,0 +1,8 @@
+{
+  "label": "fp16",
+  "run_utc": "20260919T190307Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "tokens_scored": 437,
+  "mean_logprob": -3.0620110244415533,
+  "perplexity": 21.37
+}

@@ -103,19 +103,32 @@ async def amain(a: argparse.Namespace) -> int:
     async with aiohttp.ClientSession() as session:
         for seq in a.seq_lens:
             pred = max_batch(seq, model=a.kv_model, dtype=a.dtype)
-            prompt = make_prompt(seq)
-            assert abs(prompt_len_tokens(prompt) - seq) <= 2
+            # DISTINCT prompts per request (seeded): identical prompts share
+            # one prefix block under prefix-caching and measure ~nothing.
+            prompts = [make_prompt(seq, seed=1000 + i)
+                       for i in range(max(pred + a.overshoot, 1))]
+            assert abs(prompt_len_tokens(prompts[0]) - seq) <= 2
             print(f"\n== seq={seq}: predicted max_batch={pred} ==")
+
+            async def distinct_wave(n: int):
+                sem = asyncio.Semaphore(max(n, 1))
+
+                async def bounded(i: int):
+                    await asyncio.sleep(0.05 * i)
+                    async with sem:
+                        return await bench.one_request(
+                            session, a.base_url, a.model, prompts[i],
+                            a.gen, a.timeout_s)
+                return await asyncio.gather(*[bounded(i) for i in range(n)])
+
             # Warmup at conc 1 so compile cost doesn't masquerade as distress.
-            await bench.wave(session, a.base_url, a.model, prompt, a.gen, 1,
-                             a.timeout_s)
+            await distinct_wave(1)
             observed, distress_at, note = 0, None, ""
             for conc in range(1, pred + a.overshoot + 1, 1):
                 stop, mid = asyncio.Event(), {}
                 sampler = asyncio.create_task(
                     sample_during(session, a.base_url, stop, mid))
-                results = await bench.wave(session, a.base_url, a.model,
-                                           prompt, a.gen, conc, a.timeout_s)
+                results = await distinct_wave(conc)
                 stop.set()
                 await sampler
                 errs = sum(1 for _, ok, _ in results if not ok)

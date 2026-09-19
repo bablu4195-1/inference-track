@@ -27,16 +27,23 @@ Tuning rule of thumb (vLLM docs): smaller budget → better ITL, worse TTFT;
 throughput wants budget > 8192 on big GPUs. The experiment finds the crossing
 for *this* model/GPU/workload instead of quoting docs.
 
-## Result table (fill on GPU)
+## Result table — first GPU run 2026-09-19 (Qwen2.5-7B, A10G, 4 decodes + 1×8k hog)
 
 | label | ITL_base | ITL_mixed | starvation_x | hog_TTFT |
 |---|---|---|---|---|
-| on-2048 | | | | |
-| on-4096 | | | | |
-| on-8192 | | | | |
-| on-16384 | | | | |
-| off-16384 | | | >>1 expected | |
+| on-2048 | 46.6 | 42.2 | 0.91 | 1766 |
+| on-4096 | 45.5 | 43.8 | 0.96 | 2049 |
+| on-8192 | 55.0 | 57.8 | 1.05 | 1778 |
+| on-16384 | 96.2 | 97.7 | 1.02 | 2908 |
+| off-16384 | 96.8 | 97.8 | 1.01 | 1754 |
 
-Success: `off-16384` starvation clearly > all `on-*`, and a monotonic
-budget trend across `on-*`. If `off` looks identical to `on-16384`, the hog
-was too small — raise `--hog-tokens` (needs `--max-model-len` headroom).
+Honest reading — the headline hypothesis FAILED at this workload scale:
+no config starves decodes, chunking on/off included. Two real findings instead:
+1. **Budget size dominates absolute ITL** (46 → 97 ms from 2048 to 16384):
+   bigger batches cost every decode, chunking or not. The tuning knob that
+   matters here is budget, not the chunked flag.
+2. **V1 protects decodes regardless** (prioritizes decode batching even with
+   chunking off) — starvation would show in hog TTFT, which is too noisy at
+   n=2 reps to resolve (1754–2908 ms spread).
+Redesign for next run: conc 16 decodes + hog 16k, and measure decode ITL
+*inside the hog-prefill window only*. Raw: `runs/20260919-p8/`.
