@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN in .env or environment}
+      HF_TOKEN: ${HF_TOKEN:-}   # empty is fine: Qwen2.5 is ungated; set a real token only for gated models
       HF_HUB_CACHE: /root/.cache/huggingface
       VLLM_CACHE_ROOT: /root/.cache/vllm
     volumes:
