@@ -49,13 +49,55 @@ def waiting_sync(base_url: str) -> float:
         return 0.0
 
 
+async def sample_during(session: aiohttp.ClientSession, base_url: str,
+                        stop: asyncio.Event, out: dict) -> None:
+    """Scrape /metrics every 2s WHILE a wave runs. Post-wave scrapes always
+    read an empty queue (P3 lesson 2026-09-19) — transient queueing is only
+    visible mid-wave."""
+    import urllib.request
+    import json as _json
+
+    peak = {"waiting": 0.0, "swapped": 0.0, "kv": 0.0, "samples": 0}
+    while not stop.is_set():
+        try:
+            def _get():
+                with urllib.request.urlopen(f"{base_url}/metrics",
+                                            timeout=5) as r:
+                    return r.read().decode()
+            text = await asyncio.get_event_loop().run_in_executor(None, _get)
+            m: dict[str, float] = {}
+            for line in text.splitlines():
+                if line.startswith("#") or " " not in line:
+                    continue
+                name, _, val = line.partition(" ")
+                try:
+                    m[name.split("{")[0]] = float(val)
+                except ValueError:
+                    pass
+            peak["waiting"] = max(peak["waiting"],
+                                  m.get("vllm:num_requests_waiting", 0.0))
+            peak["swapped"] = max(peak["swapped"],
+                                  m.get("vllm:num_requests_swapped", 0.0))
+            peak["kv"] = max(peak["kv"],
+                             m.get("vllm:kv_cache_usage_perc", 0.0))
+            peak["samples"] += 1
+        except Exception:
+            pass
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=2.0)
+        except asyncio.TimeoutError:
+            pass
+    out.update(peak)
+
+
 async def amain(a: argparse.Namespace) -> int:
     if not await health(a.base_url):
         print(f"FATAL: {a.base_url}/health unreachable", file=sys.stderr)
         return 1
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out = Path(f"p03-kvcalc/validation-{stamp}.json")
-    report: dict = {"run_utc": stamp, "model": a.model,
+    out = Path(a.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    report: dict = {"run_utc": stamp, "model": a.model, "label": a.label,
                     "kv_predictor": "libs/kv_math.py", "seqs": {}}
 
     async with aiohttp.ClientSession() as session:
@@ -69,11 +111,17 @@ async def amain(a: argparse.Namespace) -> int:
                              a.timeout_s)
             observed, distress_at, note = 0, None, ""
             for conc in range(1, pred + a.overshoot + 1, 1):
+                stop, mid = asyncio.Event(), {}
+                sampler = asyncio.create_task(
+                    sample_during(session, a.base_url, stop, mid))
                 results = await bench.wave(session, a.base_url, a.model,
                                            prompt, a.gen, conc, a.timeout_s)
+                stop.set()
+                await sampler
                 errs = sum(1 for _, ok, _ in results if not ok)
-                q = waiting_sync(a.base_url)
-                tag = f"conc={conc} errs={errs} waiting={q:.0f}"
+                q = mid.get("waiting", 0.0)  # PEAK mid-wave queue depth
+                tag = (f"conc={conc} errs={errs} max_waiting={q:.0f} "
+                       f"max_kv={mid.get('kv', 0.0):.0%}")
                 if errs or q >= a.queue_limit:
                     distress_at = conc
                     note = f"errors={errs} waiting={q:.0f}"
@@ -91,8 +139,8 @@ async def amain(a: argparse.Namespace) -> int:
             }
             print(f"seq={seq}: pred={pred} observed={observed} "
                   f"err={err_pct:+.1f}% -> {verdict}")
-    out.write_text(json.dumps(report, indent=2))
-    print(f"\nWROTE {out} — paste table into p03-kvcalc/README.md")
+    (out / f"validation-{a.label}-{stamp}.json").write_text(json.dumps(report, indent=2))
+    print(f"\nWROTE {out}/validation-{a.label}-{stamp}.json — paste table into p03-kvcalc/README.md")
     return 0
 
 
@@ -100,9 +148,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="P3 pressure validation")
     ap.add_argument("--base-url", default="http://localhost:8000")
     ap.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct")
+    ap.add_argument("--label", default="run",
+                    help="tag for output filename + row config")
+    ap.add_argument("--out-dir", default=".",
+                    help="directory for validation-<label>-<utc>.json")
     ap.add_argument("--kv-model", default="qwen2.5-7b",
                     help="key in libs/kv_math.MODEL_SPECS")
-    ap.add_argument("--dtype", default="fp16", choices=["fp16", "bf16", "fp8"])
+    ap.add_argument("--dtype", default="fp16", choices=["fp16", "bf16", "fp8", "awq"])
     ap.add_argument("--seq-lens", type=int, nargs="+", default=[2048, 4096, 8192])
     ap.add_argument("--gen", type=int, default=128)
     ap.add_argument("--overshoot", type=int, default=4,

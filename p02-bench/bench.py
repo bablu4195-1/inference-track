@@ -55,28 +55,45 @@ async def server_version(base_url: str) -> str:
 
 
 async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
-                      prompt: str, max_tokens: int, timeout_s: float):
-    """Single streaming request -> (RequestStats, ok, err)."""
+                      prompt: str, max_tokens: int, timeout_s: float,
+                      retries: int = 2):
+    """Single streaming request -> (RequestStats, ok, err).
+
+    Retries connection-level failures (SYN burst vs graph capture can RST a
+    whole wave) with backoff — but only while zero tokens arrived, so a retry
+    never double-counts a partially-served request.
+    """
     url = f"{base_url}/v1/completions"
     payload = {"model": model, "prompt": prompt, "max_tokens": max_tokens,
                "temperature": 0.0, "stream": True}
-    send_t = time.perf_counter()
-    token_times: list[float] = []
-    try:
-        async with session.post(url, json=payload,
-                                timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
-            resp.raise_for_status()
-            async for raw in resp.content:
-                line = raw.decode("utf-8", "replace").strip()
-                if not line.startswith("data:"):
-                    continue
-                if line[5:].strip() == "[DONE]":
-                    break
-                token_times.append(time.perf_counter())
-    except Exception as e:  # record failures as rows, don't kill the wave
+    attempt_err: Exception | None = None
+    for attempt in range(retries):
+        send_t = time.perf_counter()
+        token_times: list[float] = []
+        try:
+            async with session.post(url, json=payload,
+                                    timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
+                resp.raise_for_status()
+                async for raw in resp.content:
+                    line = raw.decode("utf-8", "replace").strip()
+                    if not line.startswith("data:"):
+                        continue
+                    if line[5:].strip() == "[DONE]":
+                        break
+                    token_times.append(time.perf_counter())
+        except (aiohttp.ClientConnectionError, asyncio.TimeoutError) as e:
+            if token_times:  # partial stream: record, don't retry
+                break
+            attempt_err = e
+            await asyncio.sleep(2.0 * (attempt + 1))
+            continue
+        except Exception as e:  # record failures as rows, don't kill the wave
+            stats = compute_stats(send_t, token_times, len(token_times))
+            return stats, False, f"{type(e).__name__}: {e}"[:200]
         stats = compute_stats(send_t, token_times, len(token_times))
-        return stats, False, f"{type(e).__name__}: {e}"[:200]
-    return compute_stats(send_t, token_times, len(token_times)), True, ""
+        return stats, True, ""
+    stats = compute_stats(time.perf_counter(), [], 0)
+    return stats, False, f"connect-failed-x{retries}: {type(attempt_err).__name__}"[:200]
 
 
 async def wave(session: aiohttp.ClientSession, base_url: str, model: str,
@@ -84,12 +101,15 @@ async def wave(session: aiohttp.ClientSession, base_url: str, model: str,
                timeout_s: float):
     sem = asyncio.Semaphore(max(concurrency, 1))
 
-    async def bounded():
+    async def bounded(i: int):
+        # 50ms stagger: 32 simultaneous SYNs can RST against a server in
+        # graph-capture; stagger costs nothing vs TTFT (timed per request).
+        await asyncio.sleep(0.05 * i)
         async with sem:
             return await one_request(session, base_url, model, prompt,
                                      max_tokens, timeout_s)
 
-    return await asyncio.gather(*[bounded() for _ in range(concurrency)])
+    return await asyncio.gather(*[bounded(i) for i in range(concurrency)])
 
 
 async def amain(a: argparse.Namespace) -> int:

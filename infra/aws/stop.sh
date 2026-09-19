@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# STOP (not terminate) the tracked instance. Usage: ./stop.sh [reason]
-# Always stop — never leave running. EBS volumes persist; you pay ~$8/mo
-# for 160GB retained, vs $0.54/hr for a running GPU.
+# TERMINATE (not stop) the tracked instance. Usage: ./stop.sh [reason]
+# One-time spot instances CANNOT be stopped (AWS limitation) — terminate ends
+# billing immediately. Weights re-pull next boot (~10 min, ~$0.09); cheaper
+# than any retention scheme at this scale.
 set -euo pipefail
 cd "$(dirname "$0")"
 REGION="${REGION:-us-east-1}"
 IID="$(cat .instance-id)"
-aws ec2 stop-instances --region "$REGION" --instance-ids "$IID" >/dev/null
-aws ec2 wait instance-stopped --region "$REGION" --instance-ids "$IID"
-echo "stopped: $IID (${1:-session end})"
-date -u +"%Y-%m-%dT%H:%M:%SZ STOP $IID ${1:-}" >> boot-log.txt
+aws ec2 terminate-instances --region "$REGION" --instance-ids "$IID" >/dev/null
+aws ec2 wait instance-terminated --region "$REGION" --instance-ids "$IID"
+echo "terminated: $IID (${1:-session end})"
+date -u +"%Y-%m-%dT%H:%M:%SZ TERM $IID ${1:-}" >> boot-log.txt
 echo "REMINDER: ./log-cost.sh <hours> spot   # record spend in cost-log.csv"

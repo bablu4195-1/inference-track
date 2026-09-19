@@ -1,1 +1,2 @@
 timestamp,mode,instance_type,hours,rate_usd_h,cost_usd,note
+2026-09-19T16:02:38Z,spot,g5.xlarge,1.0,0.54,0.54,boot1: first serve + P2 full + P4 AB + P3

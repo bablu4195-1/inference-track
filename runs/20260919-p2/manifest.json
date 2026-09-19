@@ -1,0 +1,22 @@
+{
+  "run_id": "20260919T153254Z",
+  "git_sha": "b7ff96e",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "base_url_host": "http://54.87.27.198:8000",
+  "server_version": "{\"version\":\"0.29.0\"}",
+  "prompt_lens": [
+    512,
+    2048,
+    8192
+  ],
+  "gen_lens": [
+    128
+  ],
+  "concs": [
+    1,
+    8,
+    32
+  ],
+  "repeats": 2,
+  "started_utc": "20260919T153254Z"
+}

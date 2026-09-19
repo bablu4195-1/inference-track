@@ -23,14 +23,16 @@ For multi-replica routing proof (needs 2× GPU — defer to P10 unless rich):
 run two servers, point `proxy.py --backends ...`, show `routes.jsonl`
 key_hash → backend stability for identical system prompts.
 
-## Result table (fill on GPU)
+## Result table — first GPU run 2026-09-19 (Qwen2.5-7B, A10G, 8 convs × 4 turns)
 
 | turn | TTFT_on | TTFT_off | cut% |
 |---|---|---|---|
-| 0 (cold) | | | ~0% expected |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| 0 | 802 | 1863 | 57.0% — NOT cold: convs share one system prompt, so convs 1–7 reuse conv 0's blocks (cross-request prefix hit — the proxy's whole job) |
+| 1 | 443 | 1800 | 75.4% |
+| 2 | 452 | 1611 | 71.9% |
+| 3 | 451 | 1620 | 72.2% |
 
-Success bar: turn ≥ 1 cut ≥ 40% on the ~2k shared prefix. If turn0 shows a
-cut, something's wrong (cold prefix can't hit) — check server flags.
+True isolated cold = conv0/turn0 only: 1106 ms (n=1, fresh-server noise —
+don't quote it). Lesson for the methodology: shared-prefix workloads make
+"turn0" a cross-conversation cache measurement, which is the production shape
+anyway. Raw: `runs/20260919-p4/{on,off}.csv`.

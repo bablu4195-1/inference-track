@@ -1,0 +1,16 @@
+{
+  "run_utc": "20260919T155207Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "label": "p3-8192-nocache",
+  "kv_predictor": "libs/kv_math.py",
+  "seqs": {
+    "8192": {
+      "predicted_max_batch": 10,
+      "observed_stable": 14,
+      "distress_at": null,
+      "distress_note": "",
+      "err_pct": 40.0,
+      "verdict": "RECALIBRATE"
+    }
+  }
+}

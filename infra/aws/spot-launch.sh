@@ -22,10 +22,10 @@ REQ=$(aws ec2 request-spot-instances --region "$REGION" \
     \"KeyName\":\"$KEY\", \"SecurityGroupIds\":[\"$SG_ID\"],
     \"Placement\":{\"AvailabilityZone\":\"$AZ\"},
     \"BlockDeviceMappings\":[
-      {\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":60,\"VolumeType\":\"gp3\"}},
+      {\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":80,\"VolumeType\":\"gp3\"}},
       {\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":100,\"VolumeType\":\"gp3\"}}
     ],
-    \"UserData\":\"$(base64 -w0 < user-data.sh)\"
+    \"UserData\":\"$(openssl base64 -A < user-data.sh)\"
   }" --query 'SpotInstanceRequests[0].SpotInstanceRequestId' --output text)
 echo "request: $REQ — waiting for fulfilment (spot can take minutes)..."
 aws ec2 wait spot-instance-request-fulfilled --region "$REGION" \
