@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+infra/aws/.instance-id
+infra/aws/boot-log.txt
+*.pem
+.DS_Store

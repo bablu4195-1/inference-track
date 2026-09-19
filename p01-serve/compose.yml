@@ -1,0 +1,42 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: vllm-qwen25-7b
+    runtime: nvidia
+    ipc: host
+    ports:
+      - "8000:8000"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:?set HF_TOKEN in .env or environment}
+      HF_HUB_CACHE: /root/.cache/huggingface
+      VLLM_CACHE_ROOT: /root/.cache/vllm
+    volumes:
+      # Persistent EBS volume holds weights + compile cache across boots.
+      - /mnt/hf:/root/.cache/huggingface
+      - vllm-cache:/root/.cache/vllm
+    command:
+      - "--model=Qwen/Qwen2.5-7B-Instruct"
+      - "--host=0.0.0.0"
+      - "--port=8000"
+      - "--dtype=auto"
+      - "--gpu-memory-utilization=0.9"
+      - "--max-model-len=8192"
+      - "--max-num-batched-tokens=8192"
+      - "--max-num-seqs=128"
+      - "--enable-prefix-caching"
+      - "--enable-chunked-prefill"
+      - "--trust-remote-code"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  vllm-cache:
