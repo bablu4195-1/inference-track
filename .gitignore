@@ -4,5 +4,6 @@ __pycache__/
 .env
 infra/aws/.instance-id
 infra/aws/boot-log.txt
+p02-bench/results/
 *.pem
 .DS_Store
