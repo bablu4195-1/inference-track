@@ -7,6 +7,7 @@ built under a **$128 hard cap**. See `docs/runbook.md` before spending a cent.
 
 - [x] Phase A scaffold (P1 configs, shared libs, AWS scripts, runbook)
 - [x] P2 benchmark harness (validated offline vs fake SSE server)
+- [x] P4 prefix proxy + multi-turn workload (routing proven, 0 key splits)
 - [ ] P1 first boot + smoke (needs AWS: `spot-launch.sh`)
 - [ ] P2 first GPU run (`p02-bench/run.sh http://<GPU>:8000 --quick` first)
 - [ ] P3 KV calculator validation
