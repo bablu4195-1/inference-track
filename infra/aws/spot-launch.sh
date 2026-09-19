@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 REGION="${REGION:-us-east-1}"
-AZ="${AZ:-us-east-1d}"
+AZ="${AZ:-us-east-1c}"   # cheapest g5.xlarge spot (Sep 2026 check: ~$0.51; 1d ~$0.53)
 TYPE="${TYPE:-g5.xlarge}"
 KEY="${1:-${KEY_NAME:?pass key name or set KEY_NAME}}"
 SG_ID="${SG_ID:?set SG_ID to the vllm-sg security group id}"

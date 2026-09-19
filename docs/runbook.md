@@ -1,7 +1,7 @@
 # Runbook — Phase A (and every GPU boot after)
 
 Model: **Qwen/Qwen2.5-7B-Instruct** (ungated, no HF license click-through).
-Instance: **g5.xlarge spot, us-east-1d**. Budget: **$128 hard cap**.
+Instance: **g5.xlarge spot, us-east-1c**. Budget: **$128 hard cap**.
 
 ## 0. Local prerequisites (Mac, $0)
 
