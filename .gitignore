@@ -13,5 +13,6 @@ p05-quant-lab/results/
 p05-quant-lab/.override.yml
 p06-spec-decode/results/
 p06-spec-decode/.override.yml
+p07-triton-kernel/results/
 *.pem
 .DS_Store
