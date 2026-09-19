@@ -37,10 +37,14 @@ GPU_UTIL = 0.9            # --gpu-memory-utilization
 USABLE_GB = A10G_GB * GPU_UTIL
 BLOCK_OVERHEAD = 1.10     # paged-block waste factor
 DTYPE_BYTES = {"fp16": 2, "bf16": 2, "fp8": 1}
+# Weight footprint divisor vs FP16; KV stays FP16 unless the dtype says otherwise.
+WEIGHTS_DIV = {"fp16": 1, "bf16": 1, "fp8": 2, "awq": 4}
+KV_DTYPE = {"fp16": "fp16", "bf16": "bf16", "fp8": "fp8", "awq": "fp16"}
 
 
 def kv_bytes_per_token(spec: dict, dtype: str = "fp16") -> int:
-    return 2 * spec["layers"] * spec["kv_heads"] * spec["head_dim"] * DTYPE_BYTES[dtype]
+    kv_dt = KV_DTYPE.get(dtype, dtype)  # awq weights, fp16 KV
+    return 2 * spec["layers"] * spec["kv_heads"] * spec["head_dim"] * DTYPE_BYTES[kv_dt]
 
 
 def kv_gb(seq_len: int, batch: int, model: str = "qwen2.5-7b",
@@ -54,9 +58,8 @@ def total_gb(seq_len: int, batch: int, model: str = "qwen2.5-7b",
              dtype: str = "fp16", weights_gb: float | None = None) -> float:
     spec = MODEL_SPECS[model]
     w = weights_gb if weights_gb is not None else spec["weights_fp16_gb"]
-    if dtype in ("fp8",):
-        w = w / 2
-    return w + 1.0 + kv_gb(seq_len, batch, model, dtype)  # 1GB activations/cuda graphs
+    w = w / WEIGHTS_DIV.get(dtype, 1)
+    return w + 1.0 + kv_gb(seq_len, batch, model, KV_DTYPE.get(dtype, "fp16"))
 
 
 def fits(seq_len: int, batch: int, **kw) -> bool:
@@ -75,7 +78,7 @@ def main() -> None:
     ap.add_argument("--model", default="qwen2.5-7b", choices=list(MODEL_SPECS))
     ap.add_argument("--seq-len", type=int, default=8192)
     ap.add_argument("--batch", type=int, default=4)
-    ap.add_argument("--dtype", default="fp16", choices=["fp16", "bf16", "fp8"])
+    ap.add_argument("--dtype", default="fp16", choices=["fp16", "bf16", "fp8", "awq"])
     ap.add_argument("--table", action="store_true")
     a = ap.parse_args()
 
