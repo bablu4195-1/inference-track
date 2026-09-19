@@ -11,5 +11,7 @@ p09-paged-attn/results/
 p09-paged-attn/.override.yml
 p05-quant-lab/results/
 p05-quant-lab/.override.yml
+p06-spec-decode/results/
+p06-spec-decode/.override.yml
 *.pem
 .DS_Store
