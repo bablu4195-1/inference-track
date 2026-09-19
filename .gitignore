@@ -5,5 +5,7 @@ __pycache__/
 infra/aws/.instance-id
 infra/aws/boot-log.txt
 p02-bench/results/
+p08-chunked-prefill/results/
+p08-chunked-prefill/.override.yml
 *.pem
 .DS_Store
