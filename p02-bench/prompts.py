@@ -21,8 +21,13 @@ CHARS_PER_TOKEN = 4
 def make_prompt(target_tokens: int, seed: int = 0) -> str:
     header = f"[bench seed={seed} target_tokens={target_tokens}]\n"
     need = target_tokens * CHARS_PER_TOKEN - len(header)
-    reps = (need // len(FILLER)) + 1
-    body = (FILLER * reps)[:need]
+    reps = (need // len(FILLER)) + 2
+    # Rotate the filler by seed: same statistics, different block alignment.
+    # Without this, "distinct" prompts share ~all KV blocks under prefix
+    # caching and capacity tests measure nothing (P9 lesson 2026-09-20).
+    # seed=0 -> offset 0 -> identical to the original behavior.
+    offset = (seed * 97) % len(FILLER)
+    body = (FILLER * reps)[offset:offset + need]
     return header + body
 
 

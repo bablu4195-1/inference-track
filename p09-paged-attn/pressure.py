@@ -80,7 +80,44 @@ async def amain(a: argparse.Namespace) -> int:
                          32, 1, a.timeout_s)
         for w in range(a.waves):
             t0 = time.perf_counter()
+            sampler_stop: list[bool] = [False]
+            sampler_peak = {"waiting": 0.0, "swapped": 0.0, "kv": 0.0}
+
+            async def sampler() -> None:
+                import urllib.request
+                while not sampler_stop[0]:
+                    try:
+                        def _get():
+                            with urllib.request.urlopen(
+                                    f"{a.base_url}/metrics", timeout=5) as r:
+                                return r.read().decode()
+                        text = await asyncio.get_event_loop().run_in_executor(
+                            None, _get)
+                        for line in text.splitlines():
+                            if line.startswith("#") or " " not in line:
+                                continue
+                            name, _, val = line.partition(" ")
+                            try:
+                                v = float(val)
+                            except ValueError:
+                                continue
+                            name = name.split("{")[0]
+                            if name == "vllm:num_requests_waiting":
+                                sampler_peak["waiting"] = max(
+                                    sampler_peak["waiting"], v)
+                            elif name == "vllm:num_requests_swapped":
+                                sampler_peak["swapped"] = max(
+                                    sampler_peak["swapped"], v)
+                            elif name == "vllm:kv_cache_usage_perc":
+                                sampler_peak["kv"] = max(sampler_peak["kv"], v)
+                    except Exception:
+                        pass
+                    await asyncio.sleep(2.0)
+
+            task = asyncio.create_task(sampler())
             res = await distinct_wave()
+            sampler_stop[0] = True
+            await task
             wall = time.perf_counter() - t0
             errs = sum(1 for _, ok, _ in res if not ok)
             toks = sum(s.gen_tokens for s, ok, _ in res if ok)
@@ -90,7 +127,9 @@ async def amain(a: argparse.Namespace) -> int:
             rows = [row(stamp, f"{a.label}:pressure", a.conc, a.prompt_tokens,
                         s, ok, err) for s, ok, err in res]
             append_csv(csv_path, rows)
-            m = snap(a.base_url)
+            m = {"vllm:num_requests_waiting": sampler_peak["waiting"],
+                 "vllm:num_requests_swapped": sampler_peak["swapped"],
+                 "vllm:kv_cache_usage_perc": sampler_peak["kv"]}
             ev = {"wave": w, "t_s": round(time.perf_counter(), 1),
                   "errs": errs, "wave_tok_s": round(toks / wall, 1) if wall else 0,
                   **{k.split(":")[1]: v for k, v in m.items()}}

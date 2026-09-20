@@ -44,9 +44,12 @@ run_config() {
   rm -f "$OVERRIDE"
 }
 
-run_config bs8  8
 run_config bs16 16
 run_config bs32 32
+# bs8 DROPPED 2026-09-20: vLLM 0.29 rejects block_size=8 on every attention
+# backend (FLASH_ATTN/FLASHINFER/TRITON: "block_size not supported"). The
+# fragmentation-vs-overhead question below bs16 needs an older vLLM or a
+# custom kernel — documented, not silently skipped.
 
 echo "===== MATRIX DONE — analyzing ====="
 python3 p09-paged-attn/analyze.py p09-paged-attn/results \
