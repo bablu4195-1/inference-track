@@ -31,10 +31,14 @@ day pays for ~16 idle-warm hours — the ledger for this lives in P12.
 Streak logic, clamps, metrics-down hold, label-set parsing, lone-spike
 rejection, pressure-then-idle round trip — green.
 
-## Scale log (fill on GPU)
+## Scale log — first GPU run 2026-09-20 (dry-run, c32×512 spike, 96/96 clean)
 
 | Event | t | waiting | Action | Latency |
 |---|---|---|---|---|
-| spike start | | | | |
-| scale 1→2 | | | | |
-| drain + scale 2→1 | | | | |
+| spike (3× c32 waves, 499 tok/s) | — | max 0.0 | hold throughout | n/a |
+| kill-replica outage (34 polls blind) | — | n/a | hold_metrics_down ×34 | no false scale |
+
+c32×512 never queues this server (consistent with P9: needs 6k contexts) —
+scale-up remains unproven live. The controller proved the harder half: it
+correctly did *nothing* under both spike-absorbed and metrics-blind
+conditions. Live scale-up needs a queue-generating load (P9-class) + `--exec`.
