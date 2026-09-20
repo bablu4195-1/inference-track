@@ -42,19 +42,30 @@ def fetch(base_url: str) -> dict[str, float]:
 
 
 def derive(m: dict[str, float]) -> dict:
-    """Best-effort acceptance from whatever counters exist."""
-    acc = [v for k, v in m.items() if "acceptance" in k and "rate" in k]
+    """Best-effort acceptance from whatever counters exist.
+
+    Prometheus exposes counters twice (`_total` value + `_created` timestamp):
+    only `_total` keys participate, else timestamps inflate the ratio (P6
+    lesson 2026-09-20: naive sum gave 600%).
+    """
+    tot = {k: v for k, v in m.items() if k.endswith("_total")}
     out: dict = {}
+    acc = [v for k, v in m.items() if "acceptance" in k and "rate" in k]
     if acc:
         out["acceptance_rate_gauge"] = sum(acc) / len(acc)
-    keys = list(m)
-    acc_keys = [k for k in keys if "accept" in k and "draft" not in k]
-    tot_keys = [k for k in keys if "draft" in k and "token" in k]
-    if acc_keys and tot_keys:
-        a = sum(m[k] for k in acc_keys)
-        t = sum(m[k] for k in tot_keys)
-        if t > 0:
-            out["acceptance_derived"] = a / t
+    a = tot.get("vllm:spec_decode_num_accepted_tokens_total")
+    t = tot.get("vllm:spec_decode_num_draft_tokens_total")
+    if a is not None and t:
+        out["acceptance_derived"] = a / t
+    else:  # fuzzy fallback over _total keys only
+        acc_keys = [k for k in tot if "accept" in k and "draft" not in k
+                    and "per_pos" not in k]
+        tot_keys = [k for k in tot if "draft" in k and "token" in k]
+        if acc_keys and tot_keys:
+            a2 = sum(tot[k] for k in acc_keys)
+            t2 = sum(tot[k] for k in tot_keys)
+            if t2 > 0:
+                out["acceptance_derived"] = a2 / t2
     return out
 
 

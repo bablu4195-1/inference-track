@@ -1,0 +1,19 @@
+{
+  "run_id": "spec3",
+  "git_sha": "13458a1",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "base_url_host": "http://34.227.58.60:8000",
+  "server_version": "{\"version\":\"0.29.0\"}",
+  "prompt_lens": [
+    512
+  ],
+  "gen_lens": [
+    64
+  ],
+  "concs": [
+    1,
+    4
+  ],
+  "repeats": 1,
+  "started_utc": "spec3"
+}

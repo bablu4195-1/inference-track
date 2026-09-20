@@ -52,7 +52,10 @@ serve_and_measure() {
 }
 
 serve_and_measure fp16 Qwen/Qwen2.5-7B-Instruct
-serve_and_measure fp8  Qwen/Qwen2.5-7B-Instruct --quantization fp8 --kv-cache-dtype fp8
+# NOTE (2026-09-20, A10G, vLLM 0.29.0): runtime --quantization fp8 fails
+# (inductor assert, then Cutlass sm80 epilogue hard-fail). fp8-kv = KV-only
+# FP8: viable path, uncalibrated scales cost quality (see README).
+serve_and_measure fp8k  Qwen/Qwen2.5-7B-Instruct --kv-cache-dtype fp8
 serve_and_measure awq  Qwen/Qwen2.5-7B-Instruct-AWQ --quantization awq
 
 echo "===== MATRIX DONE — comparing ====="

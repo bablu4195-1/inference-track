@@ -41,7 +41,7 @@ def load(results: Path):
                          "ppl": p["perplexity"]})
         except Exception as e:
             print(f"skip {d.name}: {e}", file=sys.stderr)
-    order = {"fp16": 0, "fp8": 1, "awq": 2}
+    order = {"fp16": 0, "fp8": 1, "fp8k": 1, "awq": 2}
     return sorted(rows, key=lambda r: order.get(r["label"], 9))
 
 

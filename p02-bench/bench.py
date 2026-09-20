@@ -65,11 +65,13 @@ async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
     """
     url = f"{base_url}/v1/completions"
     payload = {"model": model, "prompt": prompt, "max_tokens": max_tokens,
-               "temperature": 0.0, "stream": True}
+               "temperature": 0.0, "stream": True,
+               "stream_options": {"include_usage": True}}
     attempt_err: Exception | None = None
     for attempt in range(retries):
         send_t = time.perf_counter()
         token_times: list[float] = []
+        usage_tokens: int | None = None
         try:
             async with session.post(url, json=payload,
                                     timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
@@ -78,8 +80,19 @@ async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
                     line = raw.decode("utf-8", "replace").strip()
                     if not line.startswith("data:"):
                         continue
-                    if line[5:].strip() == "[DONE]":
+                    data = line[5:].strip()
+                    if data == "[DONE]":
                         break
+                    # Authoritative token count: spec decoding batches multiple
+                    # tokens per SSE event, so chunk-counting lies (P6 lesson).
+                    if '"usage"' in data:
+                        try:
+                            import json as _json
+                            usage_tokens = _json.loads(data)["usage"].get(
+                                "completion_tokens", usage_tokens)
+                        except Exception:
+                            pass
+                        continue
                     token_times.append(time.perf_counter())
         except (aiohttp.ClientConnectionError, asyncio.TimeoutError) as e:
             if token_times:  # partial stream: record, don't retry
@@ -90,7 +103,8 @@ async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
         except Exception as e:  # record failures as rows, don't kill the wave
             stats = compute_stats(send_t, token_times, len(token_times))
             return stats, False, f"{type(e).__name__}: {e}"[:200]
-        stats = compute_stats(send_t, token_times, len(token_times))
+        n_tok = usage_tokens if usage_tokens else len(token_times)
+        stats = compute_stats(send_t, token_times, n_tok)
         return stats, True, ""
     stats = compute_stats(time.perf_counter(), [], 0)
     return stats, False, f"connect-failed-x{retries}: {type(attempt_err).__name__}"[:200]

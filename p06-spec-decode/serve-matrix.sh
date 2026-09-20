@@ -20,8 +20,8 @@ wait_healthy() {
 }
 
 serve_and_measure() {
-  local label="$1"; shift
-  echo "===== CONFIG $label : $* ====="
+  local label="$1" spec_json="$2"
+  echo "===== CONFIG $label ====="
   {
     echo "services:"
     echo "  vllm:"
@@ -35,7 +35,7 @@ serve_and_measure() {
     echo "      - \"--max-num-seqs=64\""
     echo "      - \"--enable-prefix-caching\""
     echo "      - \"--trust-remote-code\""
-    for flag in "$@"; do echo "      - \"$flag\""; done
+    if [ -n "$spec_json" ]; then echo "      - '--speculative-config=$spec_json'"; fi
   } > "$OVERRIDE"
   docker compose -f p01-serve/compose.yml -f "$OVERRIDE" up -d --force-recreate
   wait_healthy
@@ -49,10 +49,13 @@ serve_and_measure() {
   rm -f "$OVERRIDE"
 }
 
-serve_and_measure baseline
-serve_and_measure spec-3 --speculative-model "$DRAFT" --num-speculative-tokens 3
-serve_and_measure spec-5 --speculative-model "$DRAFT" --num-speculative-tokens 5
-serve_and_measure spec-8 --speculative-model "$DRAFT" --num-speculative-tokens 8
+SPEC() {
+  printf '{"method":"draft_model","model":"%s","num_speculative_tokens":%s}' "$DRAFT" "$1"
+}
+serve_and_measure baseline ""
+serve_and_measure spec-3 "$(SPEC 3)"
+serve_and_measure spec-5 "$(SPEC 5)"
+serve_and_measure spec-8 "$(SPEC 8)"
 
 echo "===== MATRIX DONE — comparing ====="
 python3 p06-spec-decode/compare.py p06-spec-decode/results \

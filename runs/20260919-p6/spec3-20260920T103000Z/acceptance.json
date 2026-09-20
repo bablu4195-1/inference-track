@@ -1,0 +1,16 @@
+{
+  "taken_utc": "20260920T100322Z",
+  "spec_decode_gauges": {
+    "vllm:spec_decode_num_drafts_total": 115.0,
+    "vllm:spec_decode_num_drafts_created": 1789898489.4433625,
+    "vllm:spec_decode_num_draft_tokens_total": 345.0,
+    "vllm:spec_decode_num_draft_tokens_created": 1789898489.4433968,
+    "vllm:spec_decode_num_accepted_tokens_total": 336.0,
+    "vllm:spec_decode_num_accepted_tokens_created": 1789898489.443416,
+    "vllm:spec_decode_num_accepted_tokens_per_pos_total": 336.0,
+    "vllm:spec_decode_num_accepted_tokens_per_pos_created": 5369695468.330354
+  },
+  "derived": {
+    "acceptance_derived": 0.9739130434782609
+  }
+}

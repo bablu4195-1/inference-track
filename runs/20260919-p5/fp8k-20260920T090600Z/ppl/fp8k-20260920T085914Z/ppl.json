@@ -1,0 +1,8 @@
+{
+  "label": "fp8k",
+  "run_utc": "20260920T085914Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "tokens_scored": 437,
+  "mean_logprob": -4.683546560048179,
+  "perplexity": 108.153
+}

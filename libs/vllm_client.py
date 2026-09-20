@@ -38,10 +38,12 @@ async def stream_completion(
     payload = {
         "model": model, "prompt": prompt, "max_tokens": max_tokens,
         "temperature": temperature, "stream": True,
+        "stream_options": {"include_usage": True},
     }
     send_t = time.perf_counter()
     token_times: list[float] = []
     text_parts: list[str] = []
+    usage_tokens: int | None = None
     async with session.post(url, json=payload) as resp:
         resp.raise_for_status()
         async for raw in resp.content:
@@ -51,6 +53,14 @@ async def stream_completion(
             data = line[5:].strip()
             if data == "[DONE]":
                 break
+            if '"usage"' in data:  # authoritative count (spec batches tokens/chunk)
+                try:
+                    import json as _json
+                    usage_tokens = _json.loads(data)["usage"].get(
+                        "completion_tokens", usage_tokens)
+                except Exception:
+                    pass
+                continue
             token_times.append(time.perf_counter())
             # Best-effort text extraction; timing is what matters.
             if '"text"' in data:
@@ -59,7 +69,8 @@ async def stream_completion(
                     text_parts.append(_json.loads(data)["choices"][0].get("text", ""))
                 except Exception:
                     pass
-    stats = compute_stats(send_t, token_times, len(token_times))
+    stats = compute_stats(send_t, token_times,
+                            usage_tokens if usage_tokens else len(token_times))
     return stats, "".join(text_parts)
 
 

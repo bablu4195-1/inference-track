@@ -1,0 +1,11 @@
+{
+  "taken_utc": "20260920T094218Z",
+  "spec_decode_gauges": {
+    "vllm:spec_decode_num_draft_tokens_total": 400.0,
+    "vllm:spec_decode_num_accepted_tokens_total": 385.0
+  },
+  "derived": {
+    "acceptance_derived": 0.9625
+  },
+  "note": "reconstructed from live acceptance.py output; file lost in bench re-run (rm -rf)"
+}
