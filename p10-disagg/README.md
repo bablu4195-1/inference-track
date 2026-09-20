@@ -21,6 +21,16 @@ what worked. A P10 that papers over version churn is fiction.
 2. `disagg-compose.yml` up (both workers, same weights on shared /mnt/hf).
 3. P2 full sweep against :8002. 4. `compare.py coloc disagg --report`.
 
+## Status 2026-09-20: partial (single-host AWQ, no handshake yet)
+
+Both workers healthy (AWQ, 0.45 util each, one A10G), NixlConnector
+configured (`kv_both`, NIXL available) — but no evidence of actual KV
+transfer: each engine self-registers (`kv_parallel_size=1`, no rank split)
+and decode serves standalone. True disagg needs producer/consumer roles +
+the routing proxy (0.29 semantics unverified offline — flagged, not faked).
+Also fixed en route: missing `healthcheck` blocks (decode never started).
+Next: roles + proxy, then the dual-GPU run the quota now allows.
+
 ## Decision table (fill on GPU)
 
 | Scenario class | TTFT Δ | ITL Δ | tok/s Δ | Winner |

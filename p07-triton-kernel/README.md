@@ -32,10 +32,20 @@ registers/shared, and stores once. Same FLOPs, ~1/3 the bytes → expect
 On any CUDA host with torch+triton (`pip install torch triton`):
 `python3 rmsnorm_triton.py --bench`. Paste the table:
 
+## Results — A10G, vLLM image torch/triton (2026-09-20)
+
+Correctness: max_abs=1.95e-03, max_rel=9.61e-04 (beats the 1e-2 bar and the
+2.2e-3 fp16 floor — fp32 accumulation justified).
+
 | rows | dim | torch_ms | triton_ms | speedup | GB/s |
 |---|---|---|---|---|---|
-| 512 | 3584 | | | | |
-| … | | | | | |
+| 512 | 3584 | 0.064 | 0.018 | 3.59x | 619 |
+| 512 | 4096 | 0.076 | 0.021 | 3.70x | 613 |
+| 2048 | 3584 | 0.231 | 0.065 | 3.57x | 682 |
+| 2048 | 4096 | 0.261 | 0.073 | 3.56x | 685 |
+| 8192 | 3584 | 0.878 | 0.246 | 3.57x | 716 |
+| 8192 | 4096 | 0.998 | 0.281 | 3.55x | 715 |
 
-Success: correctness `max_rel < 1e-2`, speedup ≥ 1.5× at rows ≥ 2048.
-Stretch (same boot): fused softmax, or RMSNorm+quant single-pass.
+Caveat (kept): GB/s exceeds A10G's ~600 GB/s HBM ceiling because `do_bench`
+repeats identical tensors (L2 reuse). The 3.5× ratio is the honest number —
+same caching applies to both sides. Raw: `runs/20260920-p7/`.
