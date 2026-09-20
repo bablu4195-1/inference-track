@@ -1,0 +1,13 @@
+{
+  "label": "on-8192-c12",
+  "run_utc": "20260920T132711Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "decode_conc": 12,
+  "hog_tokens": 8192,
+  "itl_base_ms": 48.47,
+  "itl_mixed_ms": 47.05,
+  "starvation_x": 0.97,
+  "hog_ttft_ms": 1822.3,
+  "n_base": 24,
+  "n_mixed": 24
+}

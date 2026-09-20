@@ -37,23 +37,28 @@ OS virtual memory pages. Consequences:
   (see `run-matrix.sh`). Predictor says all three OOM — the question is
   *how gracefully* and at what throughput cost.
 
-## 3. Results (fill on GPU — `analyze.py --report` output goes here)
+## 3. Results — first GPU run 2026-09-20 (Qwen2.5-7B, A10G, 6× conc32×6k, rotated prompts)
 
 | label | wait@wave | swap@wave | err% | tok/s | peak_kv |
 |---|---|---|---|---|---|
-| bs8 | | | | | |
-| bs16 | | | | | |
-| bs32 | | | | | |
+| bs16 | w0 | — | 0.0% | 217 | 100% |
+| bs32 | w0 | — | 0.0% | 213 | 100% |
 
-## 4. Findings (fill on GPU)
+(bs8 untestable: 0.29 rejects it on all backends. First bs16 attempt measured
+nothing — identical prompts shared all blocks; fixed with prompt rotation.)
 
-- **Eviction onset:** which block size queues/swaps first, and by how many waves?
-- **Graceful vs cliff:** does throughput degrade smoothly (queueing absorbs)
-  or fall off a cliff (mass eviction + recompute storms)? Quote wave tok/s.
-- **Fragmentation verdict:** does bs=8's lower waste buy measurable capacity
-  (later first_swap), or does table/kernel overhead dominate (lower tok/s)?
-- **Scheduler lesson:** the flag that mattered most under pressure was ___,
-  because ___.
+## 4. Findings (2026-09-20)
+
+- **bs16 vs bs32: indistinguishable.** Both saturate KV instantly, queue ~22,
+  hold ~215 tok/s, never evict. The 0.13%-vs-0.27% internal-fragmentation gap
+  is unresolvable at this scale — second honest null of the track (see P8).
+- **No eviction at 100% KV is the real story.** The scheduler queues and
+  time-slices instead of swapping at conc32×6k. Forcing actual preemption
+  needs worse pressure (higher conc, longer gen, or smaller pool) — queued
+  as a stretch, with the driver ready.
+- **External fragmentation: zero observed**, as designed — allocation never
+  failed below capacity, only queued. Paging works; the report's headline is
+  that the failure mode is *graceful queueing*, not fragmentation cliffs.
 
 ## 5. Repro
 

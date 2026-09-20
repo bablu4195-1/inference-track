@@ -1,0 +1,70 @@
+{
+  "label": "bs16",
+  "run_utc": "20260920T121128Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "prompt_tokens": 6000,
+  "conc": 32,
+  "waves": 6,
+  "first_wait_wave": 0,
+  "first_swap_wave": null,
+  "total_errors": 0,
+  "error_rate": 0.0,
+  "mean_wave_tok_s": 216.9,
+  "peak_kv": 0.9991809991809992,
+  "timeline": [
+    {
+      "wave": 0,
+      "t_s": 185201.8,
+      "errs": 0,
+      "wave_tok_s": 206.6,
+      "num_requests_waiting": 21.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9924242424242424
+    },
+    {
+      "wave": 1,
+      "t_s": 185281.1,
+      "errs": 0,
+      "wave_tok_s": 234.2,
+      "num_requests_waiting": 18.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9946764946764947
+    },
+    {
+      "wave": 2,
+      "t_s": 185367.2,
+      "errs": 0,
+      "wave_tok_s": 215.2,
+      "num_requests_waiting": 21.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9928337428337428
+    },
+    {
+      "wave": 3,
+      "t_s": 185452.3,
+      "errs": 0,
+      "wave_tok_s": 218.2,
+      "num_requests_waiting": 22.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9989762489762489
+    },
+    {
+      "wave": 4,
+      "t_s": 185539.6,
+      "errs": 0,
+      "wave_tok_s": 208.5,
+      "num_requests_waiting": 21.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9991809991809992
+    },
+    {
+      "wave": 5,
+      "t_s": 185622.6,
+      "errs": 0,
+      "wave_tok_s": 220.7,
+      "num_requests_waiting": 21.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9914004914004914
+    }
+  ]
+}

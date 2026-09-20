@@ -26,10 +26,15 @@ vs 99% target, MTTR proxy, per-bucket recovery curve.
 Gateway (P13) up fronting vLLM; scaler (P11) watching. Baseline P2 quick →
 each fault + P2 quick during fault → `slo.py` per fault. Bonus: tonight's
 accidental spot reclaim is already filed as chaos evidence — see boot log.
-## Findings (fill on GPU)
+## Findings — first GPU run 2026-09-20 (kill-replica, A10G)
 
 | Fault | Burn delta | Headroom | MTTR | Masked by |
 |---|---|---|---|---|
-| kill-replica | | | | |
-| throttle | | | | |
-| spike | | | | |
+| kill-replica (`docker restart`) | 100% during window (fast-fail 0.3 s, no hangs) | n/a (single replica, no fallback wired) | **~3.1 min** (kill 13:38:52 → healthy ~13:42) | nothing — and that's the finding: without P13 in front, users eat the full RTO |
+| throttle | _(pending)_ | | | |
+| spike | _(pending)_ | | | |
+
+Scaler held correctly through the outage: 34/48 polls metrics-down, zero
+scale actions (`hold_metrics_down` — the policy working as designed, no
+flapping on blindness). slo.py validated offline; live burn math once the
+gateway fronts the fault. Raw: `runs/20260919-p14/`.

@@ -47,3 +47,8 @@ no config starves decodes, chunking on/off included. Two real findings instead:
    n=2 reps to resolve (1754–2908 ms spread).
 Redesign for next run: conc 16 decodes + hog 16k, and measure decode ITL
 *inside the hog-prefill window only*. Raw: `runs/20260919-p8/`.
+
+Update 2026-09-20 (conc12 retest): on-8192-c12 starvation 0.97x, off-16384-c12
+1.01x — still no starvation at 3× the decode pressure. V1's decode-first
+scheduling holds; the chunking flag is unresolvable below extreme pressure on
+this stack. Standing answer: **budget size is the tuning knob** (46→97 ms).

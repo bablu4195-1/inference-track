@@ -1,0 +1,11 @@
+{"t_s": 0.0, "utc": "13:43:31", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 11.8, "utc": "13:43:42", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 23.1, "utc": "13:43:53", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 34.4, "utc": "13:44:05", "waiting": 0.0, "running": 27.0, "desired": 1, "action": "hold"}
+{"t_s": 45.9, "utc": "13:44:16", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 57.1, "utc": "13:44:27", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 68.6, "utc": "13:44:39", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 80.0, "utc": "13:44:50", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 91.4, "utc": "13:45:02", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 103.6, "utc": "13:45:14", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
+{"t_s": 115.0, "utc": "13:45:25", "waiting": 0.0, "running": 0.0, "desired": 1, "action": "hold"}
