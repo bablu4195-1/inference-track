@@ -1,0 +1,6 @@
+run_id,config,concurrency,prompt_len,gen_len,ttft_ms,itl_p50_ms,itl_p95_ms,e2e_ms,toks_per_s,ok,err
+normal,p512/g64/c1,1,512,64,384.1,10.95,18.8,980.9,65.24,True,
+normal,p512/g64/c4,4,512,64,325.9,9.84,24.32,989.1,64.7,True,
+normal,p512/g64/c4,4,512,64,667.3,0.02,27.81,1378.5,46.43,True,
+normal,p512/g64/c4,4,512,64,628.1,3.5,27.9,1326.7,48.24,True,
+normal,p512/g64/c4,4,512,64,644.9,0.01,18.57,1312.5,48.76,True,

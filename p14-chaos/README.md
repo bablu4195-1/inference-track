@@ -31,8 +31,8 @@ accidental spot reclaim is already filed as chaos evidence — see boot log.
 | Fault | Burn delta | Headroom | MTTR | Masked by |
 |---|---|---|---|---|
 | kill-replica (`docker restart`) | 100% during window (fast-fail 0.3 s, no hangs) | n/a (single replica, no fallback wired) | **~3.1 min** (kill 13:38:52 → healthy ~13:42) | nothing — and that's the finding: without P13 in front, users eat the full RTO |
-| throttle | _(pending)_ | | | |
-| spike | _(pending)_ | | | |
+| throttle (SM clocks 1710→1005, AWQ) | **+0.0%** — c1 65.2→60.6 tok/s (−7%), c4 52.0→49.8 (−4%) | +1.0pp | n/a (no breach) | memory-bound decode barely notices SM cuts; `-lgc` is the wrong fault for inference — memory clocks (`-lmc`) next time |
+| spike | _(pending — c32 absorbed clean in P11 test)_ | | | |
 
 Scaler held correctly through the outage: 34/48 polls metrics-down, zero
 scale actions (`hold_metrics_down` — the policy working as designed, no

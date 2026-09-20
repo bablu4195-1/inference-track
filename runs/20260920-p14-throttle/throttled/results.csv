@@ -1,0 +1,6 @@
+run_id,config,concurrency,prompt_len,gen_len,ttft_ms,itl_p50_ms,itl_p95_ms,e2e_ms,toks_per_s,ok,err
+throttled,p512/g64/c1,1,512,64,326.6,13.5,21.63,1056.3,60.59,True,
+throttled,p512/g64/c4,4,512,64,341.5,11.76,23.33,1066.2,60.03,True,
+throttled,p512/g64/c4,4,512,64,660.0,5.23,25.9,1389.8,46.05,True,
+throttled,p512/g64/c4,4,512,64,610.0,7.07,26.18,1349.2,47.44,True,
+throttled,p512/g64/c4,4,512,64,669.8,5.23,28.34,1403.9,45.59,True,
