@@ -1,0 +1,8 @@
+{
+  "label": "B",
+  "run_utc": "20260921T105757Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+  "tokens_scored": 437,
+  "mean_logprob": -3.0840272127222796,
+  "perplexity": 21.846
+}

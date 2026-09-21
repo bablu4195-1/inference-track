@@ -1,0 +1,22 @@
+{
+  "run_id": "disagg2",
+  "git_sha": "3dd2fa8",
+  "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+  "base_url_host": "http://3.85.30.181:8000",
+  "server_version": "{\"error\": \"POST /v1/* or GET /health\"}",
+  "prompt_lens": [
+    512,
+    2048,
+    8192
+  ],
+  "gen_lens": [
+    128
+  ],
+  "concs": [
+    1,
+    8,
+    32
+  ],
+  "repeats": 2,
+  "started_utc": "disagg2"
+}

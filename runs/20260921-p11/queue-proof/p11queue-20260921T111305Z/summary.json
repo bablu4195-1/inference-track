@@ -1,0 +1,43 @@
+{
+  "label": "p11queue",
+  "run_utc": "20260921T111305Z",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "prompt_tokens": 6000,
+  "conc": 16,
+  "waves": 3,
+  "first_wait_wave": 0,
+  "first_swap_wave": null,
+  "total_errors": 0,
+  "error_rate": 0.0,
+  "mean_wave_tok_s": 124.4,
+  "peak_kv": 0.9948373773877129,
+  "timeline": [
+    {
+      "wave": 0,
+      "t_s": 220586.1,
+      "errs": 0,
+      "wave_tok_s": 123.1,
+      "num_requests_waiting": 13.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9948373773877129
+    },
+    {
+      "wave": 1,
+      "t_s": 220623.2,
+      "errs": 0,
+      "wave_tok_s": 126.1,
+      "num_requests_waiting": 13.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9870934434692824
+    },
+    {
+      "wave": 2,
+      "t_s": 220660.8,
+      "errs": 0,
+      "wave_tok_s": 124.1,
+      "num_requests_waiting": 13.0,
+      "num_requests_swapped": 0.0,
+      "kv_cache_usage_perc": 0.9901910170366546
+    }
+  ]
+}

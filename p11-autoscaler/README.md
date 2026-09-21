@@ -31,14 +31,16 @@ day pays for ~16 idle-warm hours — the ledger for this lives in P12.
 Streak logic, clamps, metrics-down hold, label-set parsing, lone-spike
 rejection, pressure-then-idle round trip — green.
 
-## Scale log — first GPU run 2026-09-20 (dry-run, c32×512 spike, 96/96 clean)
+## Scale log — live round trip 2026-09-21 (dry-run, P9-class queue load)
 
 | Event | t | waiting | Action | Latency |
 |---|---|---|---|---|
-| spike (3× c32 waves, 499 tok/s) | — | max 0.0 | hold throughout | n/a |
-| kill-replica outage (34 polls blind) | — | n/a | hold_metrics_down ×34 | no false scale |
+| queue builds (conc16×6k, KV 99%) | 30–57 s | 5–14 | — | — |
+| **scale 1→2** | **57 s** | 5 | scale_up_q5 | ~30 s from sustained pressure |
+| drain | ~200 s | 0 | — | — |
+| **scale 2→1** | **237 s** | 0 | scale_down_idle | ~2 min idle (12-poll streak) |
 
-c32×512 never queues this server (consistent with P9: needs 6k contexts) —
-scale-up remains unproven live. The controller proved the harder half: it
-correctly did *nothing* under both spike-absorbed and metrics-blind
-conditions. Live scale-up needs a queue-generating load (P9-class) + `--exec`.
+Controller proven end-to-end against real queue dynamics (dry-run actuation;
+`--exec` flips the same decisions to docker). Combined with the earlier
+correct-hold evidence (spike-absorbed + blind-outage), the control law is
+fully characterized. Raw: `runs/20260921-p11/`.

@@ -7,3 +7,4 @@ timestamp,mode,instance_type,hours,rate_usd_h,cost_usd,note
 2026-09-20T17:39:17Z,spot,g5.xlarge,1.3,0.54,0.7,boot6: P10 partial (handshake pending), P7 bench 3.6x
 2026-09-20T20:22:20Z,spot,g5.xlarge,2.5,0.54,1.35,boot7: P10 handshake deep-dive, P14 throttle pair
 2026-09-21T10:09:12Z,ondemand,g5.xlarge,1.0,1.01,1.01,boot8: P10 single-GPU disagg verdict (coloc wins); on-demand (spot dry)
+2026-09-21T12:05:18Z,spot,g5.xlarge,3.0,0.54,1.62,boot9: P10 dual verdict + P15 finals + P11 live round trip
