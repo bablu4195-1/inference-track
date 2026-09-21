@@ -26,11 +26,11 @@ the gateway's usage headers (P13) feed the same key `(tenant, model, config)`.
 Runs on any results CSV, including all synthetic validation data. First real
 run: point it at P2's first GPU sweep + `log-cost.sh` entry.
 
-## Live ledger (fill as spend happens)
+## Live ledger (from `runs/`, P12 code on real data 2026-09-21)
 
 | Run | Tokens (in+out) | GPU $ | $/M blended | MFU p50 | Notes |
 |---|---|---|---|---|---|
-| _(pending first boot)_ | | | | | |
+| P2 full sweep (boot1) | 913,152 | 0.54 | **0.59** | ~0.3% | long-context rows cheapest/M (token density beats e2e growth); above commercial $0.20–0.50 at this scale — utilization story holds |
 
 Reference anchor: commercial 8B-class APIs sit near $0.20–0.50/M blended;
 self-hosted wins when utilization is high and loses idle — which is exactly
