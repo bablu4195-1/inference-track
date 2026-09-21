@@ -31,13 +31,19 @@ the routing proxy (0.29 semantics unverified offline — flagged, not faked).
 Also fixed en route: missing `healthcheck` blocks (decode never started).
 Next: roles + proxy, then the dual-GPU run the quota now allows.
 
-## Decision table (fill on GPU)
+## Decision table — first GPU run 2026-09-21 (AWQ, ONE A10G, mini-proxy)
 
 | Scenario class | TTFT Δ | ITL Δ | tok/s Δ | Winner |
 |---|---|---|---|---|
-| short prompt, low conc | | | | expect coloc (transfer overhead) |
-| long context (8k) | | | | expect disagg (uncontended prefill) |
-| mixed P8 workload | | | | expect disagg (isolation) |
+| short prompt (512) | +230–310% | n/a (proxy non-streaming) | −7…+7% | coloc |
+| long context (8k) | +200–315% | n/a | −4…+77% (noisy) | coloc |
+| **Overall: disagg wins 0/9** (mean tok/s +7.3%) | | | | **coloc** |
 
-Success: disagg wins long-context/mixed, loses-or-ties short — the crossover
-documented with numbers is the result, not a trophy for either side.
+Verdict: single-GPU disagg is a **loss** — the proxy hop + split pools on
+shared SMs adds 3–4× E2E latency with no isolation benefit. The isolation
+*is* the product: this result scopes P10 correctly to **two GPUs**
+(quota now allows 8 vCPU spot). Also: mini-proxy is non-streaming, so TTFT
+here is really E2E — the compare is fair on throughput, not latency shape.
+Handshake chain that finally worked: roles + explicit routable `kv_ip` +
+proxy passing prefill's own advertisement (the example proxy overwrites
+`remote_host` with `localhost` — the actual bug). Raw: `runs/20260921-p10/`.

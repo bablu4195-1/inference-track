@@ -72,14 +72,18 @@ async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
         send_t = time.perf_counter()
         token_times: list[float] = []
         usage_tokens: int | None = None
+        saw_sse = False
+        raw_body = b""
         try:
             async with session.post(url, json=payload,
                                     timeout=aiohttp.ClientTimeout(total=timeout_s)) as resp:
                 resp.raise_for_status()
                 async for raw in resp.content:
+                    raw_body += raw
                     line = raw.decode("utf-8", "replace").strip()
                     if not line.startswith("data:"):
                         continue
+                    saw_sse = True
                     data = line[5:].strip()
                     if data == "[DONE]":
                         break
@@ -94,6 +98,18 @@ async def one_request(session: aiohttp.ClientSession, base_url: str, model: str,
                             pass
                         continue
                     token_times.append(time.perf_counter())
+                if not saw_sse:
+                    # Non-streaming JSON body (e.g. P10 mini-proxy): single
+                    # sample at completion; tokens from top-level usage.
+                    end_t = time.perf_counter()
+                    try:
+                        import json as _json
+                        doc = _json.loads(raw_body.decode())
+                        usage_tokens = doc.get("usage", {}).get("completion_tokens")
+                        if usage_tokens:
+                            token_times = [end_t]
+                    except Exception:
+                        pass
         except (aiohttp.ClientConnectionError, asyncio.TimeoutError) as e:
             if token_times:  # partial stream: record, don't retry
                 break
